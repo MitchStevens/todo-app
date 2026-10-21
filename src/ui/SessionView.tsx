@@ -13,11 +13,11 @@ import {
   type Session,
   type Step,
 } from '../core/engine';
-import { infeasibility, type Infeasible } from '../core/situation';
+import { infeasibility, needsFollowUp, type Infeasible } from '../core/situation';
 import { DURATIONS, type Id, type Situation, type Task } from '../core/types';
 import type { Repo } from '../store/repo';
 import type { Navigate } from './App';
-import { formatAge, formatDuration, reasonText, situationText, taskMeta } from './format';
+import { formatAge, formatDuration, fromDateInput, reasonText, situationText, taskMeta } from './format';
 import { useRepo } from './hooks';
 import { BackIcon, CloseIcon } from './icons';
 import { ContextChips } from './SituationPicker';
@@ -25,6 +25,7 @@ import { ContextChips } from './SituationPicker';
 type Mode =
   | { name: 'step' }
   | { name: 'cant'; task: Id }
+  | { name: 'schedule'; task: Id }
   | { name: 'blocker'; task: Id }
   | { name: 'duration'; task: Id }
   | { name: 'context'; task: Id }
@@ -73,6 +74,8 @@ export function SessionView({ situation, go }: { situation: Situation; go: Navig
       );
     case 'cant':
       return <CantDo task={repo.task(mode.task)!} {...ctx} />;
+    case 'schedule':
+      return <Schedule task={repo.task(mode.task)!} {...ctx} />;
     case 'blocker':
       return <BlockerPicker task={repo.task(mode.task)!} {...ctx} />;
     case 'duration':
@@ -274,6 +277,8 @@ function SuggestView({
   close,
 }: Ctx & { step: Extract<Step, { type: 'suggest' }>; taskId: Id; session: Session; close: () => void }) {
   const t = plan.byId.get(taskId)!;
+  const followUp = needsFollowUp(t, plan.now);
+  const toArrange = !!t.delegated && !followUp;
   const done = () => {
     repo.setStatus(t.id, 'done');
     repo.addSuggestion({ task: t.id, outcome: 'done' });
@@ -292,11 +297,20 @@ function SuggestView({
         </button>
         <span class="muted small">{situationText(situation, repo.data.contexts)}</span>
       </div>
-      <h2 style="margin-top:12px">{step.override ? 'Deadline: do this now' : 'Do this now'}</h2>
+      <h2 style="margin-top:12px">
+        {followUp ? 'Did this happen?' : `${step.override ? 'Deadline: ' : ''}${toArrange ? 'Arrange this now' : 'Do this now'}`}
+      </h2>
       <h1>{t.title}</h1>
       <div class="muted">{taskMeta(t, repo.data.contexts, plan.now)}</div>
       <div class="box">
         <strong>Why this one</strong>
+        {followUp && (
+          <div>
+            It was booked for{' '}
+            {new Date(t.scheduledFor!).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+          </div>
+        )}
+        {toArrange && <div>Someone else does it, but you have to set it up</div>}
         {step.reasons.map((r, i) => (
           <div key={i}>{reasonText(r, plan.now)}</div>
         ))}
@@ -310,9 +324,20 @@ function SuggestView({
         </div>
       )}
       <div class="grow" />
-      <button class="btn primary block" onClick={done}>
-        Mark done
-      </button>
+      {toArrange ? (
+        <button class="btn primary block" onClick={() => setMode({ name: 'schedule', task: t.id })}>
+          I've arranged it
+        </button>
+      ) : (
+        <button class="btn primary block" onClick={done}>
+          {followUp ? 'Yes, it’s done' : 'Mark done'}
+        </button>
+      )}
+      {followUp && (
+        <button class="btn block" onClick={() => setMode({ name: 'schedule', task: t.id })}>
+          It’s booked for a new date
+        </button>
+      )}
       <div class="row2">
         <button class="btn" onClick={skip}>
           Skip
@@ -330,6 +355,7 @@ function SuggestView({
 
 const INFEASIBLE_TEXT: Record<Infeasible, string> = {
   blocked: 'waiting on another task',
+  scheduled: 'booked with someone else',
   too_long: 'take longer than you have',
   context: 'need somewhere or something else',
   energy: 'need more energy',
@@ -340,7 +366,7 @@ function NothingFits({ repo, situation, close, changeSituation }: Ctx & { close:
   const byId = new Map(repo.data.tasks.map((t) => [t.id, t]));
   const counts = new Map<Infeasible, number>();
   for (const t of repo.data.tasks) {
-    const why = infeasibility(t, situation, byId);
+    const why = infeasibility(t, situation, byId, Date.now());
     if (why && why !== 'closed') counts.set(why, (counts.get(why) ?? 0) + 1);
   }
   const open = repo.data.tasks.filter((t) => t.status === 'open').length;
@@ -542,6 +568,31 @@ function MissingThing({ task, repo, setMode, cant }: Ctx & { task: Task }) {
           Save
         </button>
       </form>
+    </SubScreen>
+  );
+}
+
+function Schedule({ task, repo, setMode, next }: Ctx & { task: Task }) {
+  const [date, setDate] = useState('');
+  const save = (scheduledFor: number | undefined) => {
+    repo.updateTask(task.id, { scheduledAt: Date.now(), scheduledFor });
+    repo.addSuggestion({ task: task.id, outcome: 'scheduled' });
+    next();
+  };
+  return (
+    <SubScreen title="When is it booked for?" task={task} back={() => setMode({ name: 'step' })}>
+      <div class="field">
+        <label for="booked-for">Date</label>
+        <input id="booked-for" type="date" class="input" value={date} onInput={(e) => setDate(e.currentTarget.value)} />
+        <span class="muted small">It's hidden until then, and comes back the day after so you can check it happened.</span>
+      </div>
+      <button class="btn primary block" disabled={!date} onClick={() => save(fromDateInput(date))}>
+        Save
+      </button>
+      <button class="btn block" onClick={() => save(undefined)}>
+        No set date
+      </button>
+      <span class="muted small">With no date, it waits until you mark it done from your task list.</span>
     </SubScreen>
   );
 }

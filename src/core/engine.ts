@@ -47,7 +47,7 @@ export function buildPlan(data: Data, situation: Situation, now: number): Plan {
     data.comparisons,
     now,
   );
-  const feasible = data.tasks.filter((t) => infeasibility(t, situation, byId) === null);
+  const feasible = data.tasks.filter((t) => infeasibility(t, situation, byId, now) === null);
   const scored = new Map<Id, Scored>();
   for (const t of feasible) {
     const s = slack(t, data.contextLogs, now);

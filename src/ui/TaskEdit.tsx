@@ -105,6 +105,54 @@ export function TaskEdit({ id, go }: { id: Id; go: Navigate }) {
       </div>
 
       <div class="field">
+        <span class="label">Who does it?</span>
+        <div class="chips">
+          <button
+            class="chip"
+            aria-pressed={!t.delegated}
+            onClick={() => update({ delegated: false, scheduledAt: undefined, scheduledFor: undefined })}
+          >
+            Me
+          </button>
+          <button class="chip" aria-pressed={!!t.delegated} onClick={() => update({ delegated: true })}>
+            Someone else
+          </button>
+        </div>
+        {t.delegated && (
+          <span class="muted small">
+            Your part is arranging it, so the time, place and energy above are for that. Once it's booked it's hidden
+            until the booked date, then comes back so you can check it happened.
+          </span>
+        )}
+      </div>
+
+      {t.delegated && (
+        <div class="field">
+          <label for="booked">{t.scheduledAt === undefined ? 'Not arranged yet' : 'Arranged, booked for'}</label>
+          <div class="inline">
+            <input
+              id="booked"
+              type="date"
+              class="input"
+              value={toDateInput(t.scheduledFor)}
+              onChange={(e) =>
+                update({ scheduledAt: t.scheduledAt ?? Date.now(), scheduledFor: fromDateInput(e.currentTarget.value) })
+              }
+            />
+            {t.scheduledAt === undefined ? (
+              <button class="btn" onClick={() => update({ scheduledAt: Date.now() })}>
+                Arranged, no date
+              </button>
+            ) : (
+              <button class="btn" onClick={() => update({ scheduledAt: undefined, scheduledFor: undefined })}>
+                Not arranged
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div class="field">
         <span class="label">Has to wait for</span>
         {t.dependsOn.length > 0 && (
           <ul class="list">

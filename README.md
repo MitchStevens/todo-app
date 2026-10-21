@@ -263,6 +263,8 @@ Task                                  # stored: what the user has told us
   contexts: set<Context>              # where/with what it can be done
   energy?: focused | any              # optional
   depends_on: set<TaskId>             # must form a DAG
+  delegated?: bool                    # someone else does it; you arrange it
+  scheduled_at?, scheduled_for?: datetime   # when you arranged it, and when it's booked for
   status: open | done | dropped
 
 Comparison                            # stored: raw evidence, append-only
@@ -349,6 +351,7 @@ Why IndexedDB rather than SQLite: SQLite in the browser needs a WebAssembly buil
 - Sessions: pick your time, place and energy, answer questions for about 30 seconds, then get a suggestion with reasons.
 - Candidates are the feasible tasks nothing beats on importance, urgency and scarcity together. Questions pair them up like a bracket. Importance answers are stored as evidence, and "which first?" answers count only for the current session but train the trade-off model, which answers on its own once it's confident.
 - Deadline override, check questions for contradicted answers, and challenge questions for weak answers that bury a task.
+- Tasks someone else does. Your part is arranging them, so they're suggested as "arrange this now" until booked, then hidden until the booked date, then suggested again as "did this happen?". Tasks that depend on them stay blocked until they're marked done.
 - Done, skip, "can't do it" with each reason updating the task (blocker, duration, context, a missing thing as a new blocker task, energy, drop or re-rank), and "I did something else".
 
 Not yet: calendar or location-based context, notifications, sync, and recurring tasks.

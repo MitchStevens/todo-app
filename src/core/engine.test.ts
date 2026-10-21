@@ -182,6 +182,18 @@ describe('session', () => {
     expect(nextStep(plan, newSession(NOW), NOW)).toMatchObject({ type: 'suggest', task: 'ok' });
   });
 
+  it('hides a task someone else does while it is booked, then brings it back to check on', () => {
+    const d = data([
+      task('to-arrange', { delegated: true }),
+      task('booked', { delegated: true, scheduledAt: NOW - DAY, scheduledFor: NOW + DAY }),
+      task('no-date', { delegated: true, scheduledAt: NOW - DAY }),
+      task('past', { delegated: true, scheduledAt: NOW - 3 * DAY, scheduledFor: NOW - DAY }),
+      task('after', { dependsOn: ['booked'] }),
+    ]);
+    const plan = buildPlan(d, HOME, NOW);
+    expect(plan.feasible.map((t) => t.id)).toEqual(['to-arrange', 'past']);
+  });
+
   it('puts a deadline that is about to be missed first, without questions', () => {
     const d = data([task('a'), task('b'), task('due', { due: NOW + DAY })]);
     const step = nextStep(buildPlan(d, HOME, NOW), newSession(NOW), NOW);

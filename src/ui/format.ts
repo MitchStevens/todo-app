@@ -38,6 +38,7 @@ export function contextNames(ids: Id[], contexts: Context[]): string[] {
 /** "Due Fri · 15 min · Home", the one-line summary used everywhere. */
 export function taskMeta(t: Task, contexts: Context[], now: number): string {
   const parts: string[] = [];
+  if (t.delegated) parts.push(delegateText(t, now));
   const due = Math.min(t.due ?? Infinity, t.softDue ?? Infinity);
   if (due !== Infinity) parts.push(`${t.due === due ? 'Due' : 'Ideally by'} ${formatDue(due, now)}`);
   if (t.duration !== undefined) parts.push(`~${formatDuration(t.duration)}`);
@@ -45,6 +46,14 @@ export function taskMeta(t: Task, contexts: Context[], now: number): string {
   parts.push(where.length ? where.join(', ') : 'Anywhere');
   if (t.energy === 'focused') parts.push('Needs focus');
   return parts.join(' · ');
+}
+
+/** Where a task someone else does stands: to arrange, booked, or to check on. */
+export function delegateText(t: Task, now: number): string {
+  if (t.scheduledAt === undefined) return 'To arrange';
+  if (t.scheduledFor === undefined) return 'Arranged';
+  if (t.scheduledFor <= now) return 'Check it happened';
+  return `Booked for ${formatDue(t.scheduledFor, now)}`;
 }
 
 export function situationText(s: Situation, contexts: Context[]): string {

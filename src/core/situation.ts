@@ -8,12 +8,13 @@ export const HISTORY_DAYS = 28;
 /** A hard deadline with this many chances or fewer left goes before everything. */
 export const OVERRIDE_CHANCES = 2;
 
-export type Infeasible = 'blocked' | 'too_long' | 'context' | 'energy' | 'closed';
+export type Infeasible = 'blocked' | 'scheduled' | 'too_long' | 'context' | 'energy' | 'closed';
 
 /** Why a task can't be done in this situation, or null if it can. */
-export function infeasibility(t: Task, s: Situation, byId: Map<Id, Task>): Infeasible | null {
+export function infeasibility(t: Task, s: Situation, byId: Map<Id, Task>, now: number): Infeasible | null {
   if (t.status !== 'open') return 'closed';
   if (t.dependsOn.some((d) => byId.get(d)?.status === 'open')) return 'blocked';
+  if (waitingOnOthers(t, now)) return 'scheduled';
   return fitReason(t, s);
 }
 
@@ -22,6 +23,16 @@ function fitReason(t: Task, s: Situation): Infeasible | null {
   if (!t.contexts.every((c) => s.contexts.includes(c))) return 'context';
   if (t.energy === 'focused' && s.energy === 'tired') return 'energy';
   return null;
+}
+
+/** Arranged, and not yet due to have happened. A booking with no date waits until it's marked done. */
+export function waitingOnOthers(t: Task, now: number): boolean {
+  return !!t.delegated && t.scheduledAt !== undefined && (t.scheduledFor === undefined || t.scheduledFor > now);
+}
+
+/** Its booked date has passed, so the next step is checking it happened. */
+export function needsFollowUp(t: Task, now: number): boolean {
+  return !!t.delegated && t.scheduledFor !== undefined && t.scheduledFor <= now;
 }
 
 /** Could the task have been done in a past situation (ignoring dependencies)? */

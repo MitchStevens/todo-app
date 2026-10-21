@@ -25,6 +25,12 @@ export interface Task {
   energy: Energy;
   /** Tasks that must be done before this one. Always a DAG. */
   dependsOn: Id[];
+  /** Someone else does it. Your part is arranging it, then checking it happened. */
+  delegated?: boolean;
+  /** When you arranged it. Until `scheduledFor` passes, it waits on someone else. */
+  scheduledAt?: number;
+  /** When it's booked for, if there's a date. */
+  scheduledFor?: number;
   status: TaskStatus;
   closedAt?: number;
   /** Comparisons involving this task from before this time are ignored. */
@@ -56,7 +62,7 @@ export interface Tradeoff {
   source: 'question' | 'behavior';
 }
 
-export type Outcome = 'done' | 'skipped' | 'cant' | 'did_other';
+export type Outcome = 'done' | 'scheduled' | 'skipped' | 'cant' | 'did_other';
 
 export interface Suggestion {
   id: Id;
