@@ -116,7 +116,7 @@ textarea.input { min-height: 88px; resize: vertical; }
 .graph { flex-shrink: 0; overflow: auto; margin: 0 -16px; padding: 4px 16px 12px; }
 .graph .edge { fill: none; stroke: var(--muted); stroke-width: 1.5; }
 .graph .edge.importance { stroke-dasharray: 5 4; }
-.graph marker path { fill: var(--muted); }
+.graph .head { fill: var(--muted); }
 .node {
   position: absolute; display: flex; flex-direction: column; justify-content: center; gap: 2px;
   padding: 6px 10px; text-align: left; border: 1px solid var(--fg); border-radius: 8px; background: var(--bg); cursor: pointer;

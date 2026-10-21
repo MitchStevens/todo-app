@@ -6,6 +6,10 @@ import { useRepo } from './hooks';
 import { BackIcon } from './icons';
 import { GAP_Y, hasse, layout, NODE_H, NODE_W, type Routed } from './layout';
 
+/** Arrowhead size. Every edge arrives vertically, so heads always point straight down. */
+const HEAD_W = 9;
+const HEAD_L = 8;
+
 export function GraphView({ go }: { go: Navigate }) {
   const repo = useRepo();
   const now = Date.now();
@@ -30,7 +34,10 @@ export function GraphView({ go }: { go: Navigate }) {
     const ends = edges.filter((o) => (side === 'in' ? o.to : o.from) === id).sort((p, q) => toward(p) - toward(q));
     return at.get(id)!.x + (NODE_W * (ends.indexOf(e) + 1)) / (ends.length + 1);
   };
-  /** A smooth path from the bottom of `from`, straight down each lane, to the top of `to`. */
+  /**
+   * A smooth path from just above `to` (where the head starts), back up each lane, to the bottom of `from`.
+   * Drawn head-first so a dashed line always starts with a dash at the head.
+   */
   const route = (e: Routed) => {
     const top = at.get(e.from)!.y + NODE_H;
     const pts: [number, number][] = [[port(e, 'out'), top]];
@@ -38,7 +45,8 @@ export function GraphView({ go }: { go: Navigate }) {
       const y = top + GAP_Y + i * (NODE_H + GAP_Y);
       pts.push([x, y], [x, y + NODE_H]);
     });
-    pts.push([port(e, 'in'), at.get(e.to)!.y]);
+    pts.push([port(e, 'in'), at.get(e.to)!.y - HEAD_L]);
+    pts.reverse();
     let d = `M${pts[0][0]} ${pts[0][1]}`;
     for (let i = 1; i < pts.length; i++) {
       const [[x1, y1], [x2, y2]] = [pts[i - 1], pts[i]];
@@ -70,14 +78,13 @@ export function GraphView({ go }: { go: Navigate }) {
         <div class="graph">
           <div style={{ position: 'relative', width: `${width}px`, height: `${height}px`, margin: '0 auto' }}>
             <svg width={width} height={height} style="position:absolute;inset:0;overflow:visible" aria-hidden="true">
-              <defs>
-                <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-                  <path d="M0 0 L10 5 L0 10 z" />
-                </marker>
-              </defs>
               {edges.map((e) => {
+                const [x, y] = [port(e, 'in'), at.get(e.to)!.y - 1];
                 return (
-                  <path key={`${e.from}-${e.to}`} class={`edge ${e.kind}`} d={route(e)} marker-end="url(#arrow)" />
+                  <g key={`${e.from}-${e.to}`}>
+                    <path class={`edge ${e.kind}`} d={route(e)} />
+                    <path class="head" d={`M${x - HEAD_W / 2} ${y - HEAD_L} L${x} ${y} L${x + HEAD_W / 2} ${y - HEAD_L} Z`} />
+                  </g>
                 );
               })}
             </svg>
