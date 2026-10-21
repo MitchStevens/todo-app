@@ -1,13 +1,13 @@
 import { useState } from 'preact/hooks';
 import { wouldCreateDependencyCycle } from '../core/graph';
 import { DURATIONS, type Id, type Task } from '../core/types';
-import type { Navigate } from './App';
+import type { Navigate, Route } from './App';
 import { formatDuration, fromDateInput, toDateInput } from './format';
 import { useRepo } from './hooks';
 import { BackIcon } from './icons';
 import { ContextChips } from './SituationPicker';
 
-export function TaskEdit({ id, go }: { id: Id; go: Navigate }) {
+export function TaskEdit({ id, back, go }: { id: Id; back: Route; go: Navigate }) {
   const repo = useRepo();
   const [error, setError] = useState<string | null>(null);
   const t = repo.task(id);
@@ -15,8 +15,8 @@ export function TaskEdit({ id, go }: { id: Id; go: Navigate }) {
     return (
       <main class="screen">
         <p>That task no longer exists.</p>
-        <button class="btn" onClick={() => go({ name: 'list' })}>
-          Back to tasks
+        <button class="btn" onClick={() => go(back)}>
+          Back
         </button>
       </main>
     );
@@ -33,7 +33,7 @@ export function TaskEdit({ id, go }: { id: Id; go: Navigate }) {
   return (
     <main class="screen">
       <div class="bar">
-        <button class="icon-btn" aria-label="Back to tasks" onClick={() => go({ name: 'list' })}>
+        <button class="icon-btn" aria-label="Back" onClick={() => go(back)}>
           <BackIcon />
         </button>
         {t.status !== 'open' && <span class="muted small">{t.status === 'done' ? 'Done' : 'Dropped'}</span>}
@@ -194,14 +194,14 @@ export function TaskEdit({ id, go }: { id: Id; go: Navigate }) {
 
       {t.status === 'open' ? (
         <>
-          <button class="btn primary block" onClick={() => (repo.setStatus(id, 'done'), go({ name: 'list' }))}>
+          <button class="btn primary block" onClick={() => (repo.setStatus(id, 'done'), go(back))}>
             Mark done
           </button>
           <div class="row2">
             <button class="btn" onClick={() => update({ resetAt: Date.now() })}>
               Re-rank from scratch
             </button>
-            <button class="btn" onClick={() => (repo.setStatus(id, 'dropped'), go({ name: 'list' }))}>
+            <button class="btn" onClick={() => (repo.setStatus(id, 'dropped'), go(back))}>
               Drop task
             </button>
           </div>

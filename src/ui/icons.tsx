@@ -29,3 +29,12 @@ export const GearIcon = () => (
     <path d="M10 1.5 V4 M10 16 V18.5 M1.5 10 H4 M16 10 H18.5 M4 4 L5.8 5.8 M14.2 14.2 L16 16 M4 16 L5.8 14.2 M14.2 5.8 L16 4" />
   </svg>
 );
+
+export const GraphIcon = () => (
+  <svg {...base}>
+    <circle cx="10" cy="3.5" r="2" />
+    <circle cx="4.5" cy="16.5" r="2" />
+    <circle cx="15.5" cy="16.5" r="2" />
+    <path d="M9 5.3 L5.5 14.7 M11 5.3 L14.5 14.7" />
+  </svg>
+);

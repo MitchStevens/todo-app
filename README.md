@@ -352,6 +352,7 @@ Why IndexedDB rather than SQLite: SQLite in the browser needs a WebAssembly buil
 - Candidates are the feasible tasks nothing beats on importance, urgency and scarcity together. Questions pair them up like a bracket. Importance answers are stored as evidence, and "which first?" answers count only for the current session but train the trade-off model, which answers on its own once it's confident.
 - Deadline override, check questions for contradicted answers, and challenge questions for weak answers that bury a task.
 - Tasks someone else does. Your part is arranging them, so they're suggested as "arrange this now" until booked, then hidden until the booked date, then suggested again as "did this happen?". Tasks that depend on them stay blocked until they're marked done.
+- A task graph screen: open tasks laid out top to bottom in the order they should go, with dependencies as solid arrows and learned importance as dashed ones. Implied edges are left out (it's the Hasse diagram), and unconnected tasks are listed below.
 - Done, skip, "can't do it" with each reason updating the task (blocker, duration, context, a missing thing as a new blocker task, energy, drop or re-rank), and "I did something else".
 
 Not yet: calendar or location-based context, notifications, sync, and recurring tasks.

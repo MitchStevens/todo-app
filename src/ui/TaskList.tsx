@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import type { Navigate } from './App';
 import { taskMeta } from './format';
 import { useRepo } from './hooks';
-import { GearIcon } from './icons';
+import { GearIcon, GraphIcon } from './icons';
 
 export function TaskList({ go }: { go: Navigate }) {
   const repo = useRepo();
@@ -26,7 +26,10 @@ export function TaskList({ go }: { go: Navigate }) {
   return (
     <main class="screen">
       <div class="bar">
-        <h1>Tasks</h1>
+        <h1 class="grow">Tasks</h1>
+        <button class="icon-btn" aria-label="Task graph" onClick={() => go({ name: 'graph' })}>
+          <GraphIcon />
+        </button>
         <button class="icon-btn" aria-label="Settings" onClick={() => go({ name: 'settings' })}>
           <GearIcon />
         </button>
